@@ -48,10 +48,21 @@ int	key_release(int keycode, t_player *player)
 	return (0);
 }
 
+void	try_move(t_player *player, float dx, float dy, t_env *env)
+{
+	float	new_x = player->x + dx;
+	float	new_y = player->y + dy;
+
+	if (!touch(new_x, player->y, env))
+		player->x += dx;
+	if (!touch(player->x, new_y, env))
+		player->y += dy;
+}
+
 void	move_player(t_player *player)
 {
-	int	speed = 5;
-	float	angle_speed = 0.1;
+	int	speed = 3;
+	float	angle_speed = 0.04;
 	float	cos_angle = cos(player->angle);
 	float	sin_angle = sin(player->angle);
 
@@ -65,23 +76,11 @@ void	move_player(t_player *player)
 		player->angle = 2 * PI;
 
 	if(player->key_up)
-	{
-		player->x += cos_angle * speed;
-		player->y += sin_angle * speed;
-	}
+		try_move(player, cos_angle * speed, sin_angle * speed, player->env);
 	if(player->key_down)
-	{
-		player->x -= cos_angle * speed;
-		player->y -= sin_angle * speed;
-	}
+		try_move(player, -cos_angle * speed, -sin_angle * speed, player->env);
 	if(player->key_left)
-	{
-		player->x += cos_angle * speed;
-		player->y -= sin_angle * speed;
-	}
+		try_move(player, sin_angle * speed, -cos_angle * speed, player->env);
 	if(player->key_right)
-	{
-		player->x -= cos_angle * speed;
-		player->y += sin_angle * speed;
-	}
+		try_move(player, -sin_angle * speed, cos_angle * speed, player->env);
 }

@@ -62,7 +62,7 @@ void	try_move(t_player *player, float dx, float dy, t_env *env)
 void	move_player(t_player *player)
 {
 	int	speed = 3;
-	float	angle_speed = 0.04;
+	float	angle_speed = 0.03;
 	float	cos_angle = cos(player->angle);
 	float	sin_angle = sin(player->angle);
 

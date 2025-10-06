@@ -64,6 +64,125 @@ void	draw_map(t_env *env)
 		}
 }
 
+<<<<<<< HEAD
+=======
+typedef struct s_hit {
+    float dist;   // distance perpendiculaire en unités "monde" (pixels si BLOCK est en px)
+    float x;      // impact x en monde
+    float y;      // impact y en monde
+    int   color;  // couleur à utiliser (N/E/S/W)
+} t_hit;
+
+// Hors-borne = solide. Lignes non rectangulaires supportées (ragged).
+static inline bool is_solid_cell(t_env *env, int mx, int my)
+{
+    if (my < 0 || !env->map[my])          return true; // hors hauteur
+    if (mx < 0 || mx >= (int)strlen(env->map[my])) return true; // hors largeur
+    char c = env->map[my][mx];
+    return (c != '0');
+}
+static inline void draw_column(int col_x, const t_hit *h, t_env *env, float fov)
+{
+    // Projection géométrique propre :
+    // proj = (WIDTH/2) / tan(FOV/2)
+    float proj = (WIDTH * 0.5f) / tanf(fov * 0.5f);
+
+    // Hauteur du mur en pixels
+    int col_h = (int)fmaxf(1.0f, (BLOCK * proj) / fmaxf(h->dist, 1e-4f));
+    int y0 = (HEIGH - col_h) / 2;
+    int y1 = y0 + col_h;
+
+    // On dessine la bande verticale
+    for (int y = y0; y < y1; ++y)
+        put_pixel(col_x, y, h->color, env);
+}
+// Retourne un impact DDA avec distance perpendiculaire (corrige le fish-eye nativement)
+static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
+{
+    // Direction du rayon
+    float dirx = cosf(ray_ang);
+    float diry = sinf(ray_ang);
+
+    // Position de départ en "cellules"
+    float cellx = p->x / BLOCK;
+    float celly = p->y / BLOCK;
+
+    int mapx = (int)floorf(cellx);
+    int mapy = (int)floorf(celly);
+
+    // Longueurs de parcours d'une cellule à l'autre
+    // (deltaDist = distance pour passer une frontière verticale/horizontale en coordonnées cellule)
+    float inv_dirx = (fabsf(dirx) < 1e-8f) ? (dirx >= 0 ? 1e8f : -1e8f) : 1.0f / dirx;
+    float inv_diry = (fabsf(diry) < 1e-8f) ? (diry >= 0 ? 1e8f : -1e8f) : 1.0f / diry;
+
+    float deltaDistX = fabsf(inv_dirx);
+    float deltaDistY = fabsf(inv_diry);
+
+    int stepX = (dirx < 0.0f) ? -1 : 1;
+    int stepY = (diry < 0.0f) ? -1 : 1;
+
+    float sideDistX, sideDistY;
+
+    // distance initiale jusqu’à la première frontière verticale/horizontale
+    if (stepX > 0)
+        sideDistX = (floorf(cellx) + 1.0f - cellx) * deltaDistX;
+    else
+        sideDistX = (cellx - floorf(cellx)) * deltaDistX;
+
+    if (stepY > 0)
+        sideDistY = (floorf(celly) + 1.0f - celly) * deltaDistY;
+    else
+        sideDistY = (celly - floorf(celly)) * deltaDistY;
+
+    int side = -1; // 0 = frontière verticale (mur E/W), 1 = frontière horizontale (mur N/S)
+
+    // DDA : avancer jusqu'à heurter une case solide
+    while (1) {
+        if (sideDistX < sideDistY) {
+            sideDistX += deltaDistX;
+            mapx += stepX;
+            side = 0;
+        } else {
+            sideDistY += deltaDistY;
+            mapy += stepY;
+            side = 1;
+        }
+        if (is_solid_cell(env, mapx, mapy))
+            break;
+    }
+
+    // Distance perpendiculaire (en unités "cellules"), puis conversion en "monde"
+    float perpCellDist;
+    if (side == 0) {
+        // On a traversé une frontière verticale
+        perpCellDist = (mapx - cellx + (1 - stepX) * 0.5f) * (inv_dirx > 0 ? 1.0f : -1.0f) * (1.0f / ( (dirx == 0.0f) ? 1e-8f : dirx));
+        perpCellDist = fabsf( (mapx - cellx + (1 - stepX) * 0.5f) * inv_dirx );
+    } else {
+        // On a traversé une frontière horizontale
+        perpCellDist = fabsf( (mapy - celly + (1 - stepY) * 0.5f) * inv_diry );
+    }
+
+    // En monde (pixels si BLOCK est en px)
+    float dist_world = perpCellDist * BLOCK;
+
+    // Point d'impact en monde
+    float ix = p->x + dirx * dist_world;
+    float iy = p->y + diry * dist_world;
+
+    // Couleur en fonction de la face heurtée (déterministe)
+    int color;
+    if (side == 0)           // mur "vertical"
+        color = (stepX > 0) ? COLOR_WEST : COLOR_EAST;   // +x => entre par face OUEST
+    else                     // mur "horizontal"
+        color = (stepY > 0) ? COLOR_NORTH : COLOR_SOUTH; // +y (vers le bas) => face NORD
+
+    hit->dist  = dist_world; // déjà perpendiculaire → pas besoin de cos(angle diff).
+    hit->x     = ix;
+    hit->y     = iy;
+    hit->color = color;
+}
+
+>>>>>>> 563f04d (save)
 void	init_env(t_env *env)
 {
 	init_player(&env->player);
@@ -158,6 +277,7 @@ void	draw_line(t_player *player, t_env *env, float start_x, int i)
 	}
 }
 
+<<<<<<< HEAD
 int	draw_loop(t_env *env)
 {
 	t_player	*player = &env->player;
@@ -180,4 +300,31 @@ int	draw_loop(t_env *env)
 	mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
 
 	return (0);
+=======
+int draw_loop(t_env *env)
+{
+    t_player *player = &env->player;
+    move_player(player);
+    clear_image(env);
+
+    if (DEBUG) {
+        draw_square(player->x, player->y, 10, 0x00FF00, env);
+        draw_map(env);
+    }
+
+    // Raycasting
+    const float fov = (float)PI / 3.0f; // 60°
+    float start = player->angle - fov * 0.5f;
+    float step  = fov / (float)WIDTH;
+
+    for (int i = 0; i < WIDTH; ++i) {
+        t_hit h;
+        float ray_ang = start + i * step;
+        cast_ray(player, ray_ang, env, &h);
+        draw_column(i, &h, env, fov);
+    }
+
+    mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
+    return 0;
+>>>>>>> 563f04d (save)
 }

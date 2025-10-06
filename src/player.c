@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   player.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/05 01:49:43 by mamagoma          #+#    #+#             */
+/*   Updated: 2025/10/05 01:57:06 by mamagoma         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/cub3d.h"
 
 void	init_player(t_player *player)
@@ -5,7 +17,6 @@ void	init_player(t_player *player)
 	player->x = WIDTH / 2;
 	player->y = HEIGH / 2;
 	player->angle = PI / 2;
-
 	player->key_up = false;
 	player->key_down = false;
 	player->key_left = false;
@@ -16,34 +27,34 @@ void	init_player(t_player *player)
 
 int	keypress(int keycode, t_player *player)
 {
-	if(keycode == W)
+	if (keycode == W)
 		player->key_up = true;
-	if(keycode == S)
+	if (keycode == S)
 		player->key_down = true;
-	if(keycode == A)
+	if (keycode == A)
 		player->key_left = true;
-	if(keycode == D)
+	if (keycode == D)
 		player->key_right = true;
-	if(keycode == LEFT)
+	if (keycode == LEFT)
 		player->left_rotate = true;
-	if(keycode == RIGHT)
+	if (keycode == RIGHT)
 		player->right_rotate = true;
 	return (0);
 }
 
 int	key_release(int keycode, t_player *player)
 {
-	if(keycode == W)
+	if (keycode == W)
 		player->key_up = false;
-	if(keycode == S)
+	if (keycode == S)
 		player->key_down = false;
-	if(keycode == A)
+	if (keycode == A)
 		player->key_left = false;
-	if(keycode == D)
+	if (keycode == D)
 		player->key_right = false;
-	if(keycode == LEFT)
+	if (keycode == LEFT)
 		player->left_rotate = false;
-	if(keycode == RIGHT)
+	if (keycode == RIGHT)
 		player->right_rotate = false;
 	return (0);
 }
@@ -61,7 +72,7 @@ void	try_move(t_player *player, float dx, float dy, t_env *env)
 
 void	move_player(t_player *player)
 {
-	int	speed = 3;
+	int		speed = 3;
 	float	angle_speed = 0.03;
 	float	cos_angle = cos(player->angle);
 	float	sin_angle = sin(player->angle);
@@ -74,13 +85,12 @@ void	move_player(t_player *player)
 		player->angle = 0;
 	if (player->angle < 0)
 		player->angle = 2 * PI;
-
-	if(player->key_up)
+	if (player->key_up)
 		try_move(player, cos_angle * speed, sin_angle * speed, player->env);
-	if(player->key_down)
+	if (player->key_down)
 		try_move(player, -cos_angle * speed, -sin_angle * speed, player->env);
-	if(player->key_left)
+	if (player->key_left)
 		try_move(player, sin_angle * speed, -cos_angle * speed, player->env);
-	if(player->key_right)
+	if (player->key_right)
 		try_move(player, -sin_angle * speed, cos_angle * speed, player->env);
 }

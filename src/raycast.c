@@ -64,8 +64,6 @@ void	draw_map(t_env *env)
 		}
 }
 
-<<<<<<< HEAD
-=======
 typedef struct s_hit {
     float dist;   // distance perpendiculaire en unités "monde" (pixels si BLOCK est en px)
     float x;      // impact x en monde
@@ -182,7 +180,6 @@ static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit 
     hit->color = color;
 }
 
->>>>>>> 563f04d (save)
 void	init_env(t_env *env)
 {
 	init_player(&env->player);
@@ -277,30 +274,6 @@ void	draw_line(t_player *player, t_env *env, float start_x, int i)
 	}
 }
 
-<<<<<<< HEAD
-int	draw_loop(t_env *env)
-{
-	t_player	*player = &env->player;
-	move_player(player);
-	clear_image(env);
-	if (DEBUG)
-	{
-		draw_square(player->x, player->y, 10, 0x00FF00, env);
-		draw_map(env);
-	}
-
-	float fraction = PI / 3 / WIDTH;
-	float start_x = player->angle - PI / 6;
-	for (int i = 0; i < WIDTH; i++)
-	{
-		draw_line(player, env, start_x, i);
-		start_x += fraction;
-	}
-
-	mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
-
-	return (0);
-=======
 int draw_loop(t_env *env)
 {
     t_player *player = &env->player;
@@ -313,7 +286,7 @@ int draw_loop(t_env *env)
     }
 
     // Raycasting
-    const float fov = (float)PI / 3.0f; // 60°
+    const float fov = (float)PI / 3.0f;
     float start = player->angle - fov * 0.5f;
     float step  = fov / (float)WIDTH;
 
@@ -326,5 +299,4 @@ int draw_loop(t_env *env)
 
     mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
     return 0;
->>>>>>> 563f04d (save)
 }

@@ -65,6 +65,13 @@ typedef struct s_env
 	char	**map;
 }	t_env;
 
+typedef struct s_hit {
+	float	dist;
+	float	x;
+	float	y;
+	int		color;
+} t_hit;
+
 //main.c :
 // void	put_pixel(int x, int y, int color, t_env *env);
 // void	clear_image(t_env *env);
@@ -94,9 +101,9 @@ char	**get_map(void);
 void	draw_map(t_env *env);
 void	init_env(t_env *env);
 bool	touch(float px, float py, t_env *env);
-int		line_color(float px, float py, t_env *env);
+// int		line_color(float px, float py, t_env *env);
 float	distance(float x, float y);
 float	fixed_dist(float x1, float y1, float x2, float y2, t_env *env);
-void	draw_line(t_player *player, t_env *env, float start_x, int i);
+// void	draw_line(t_player *player, t_env *env, float start_x, int i);
 
 #endif

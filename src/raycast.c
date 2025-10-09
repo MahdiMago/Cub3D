@@ -64,54 +64,84 @@ void	draw_map(t_env *env)
 		}
 }
 
-typedef struct s_hit {
-    float dist;   // distance perpendiculaire en unités "monde" (pixels si BLOCK est en px)
-    float x;      // impact x en monde
-    float y;      // impact y en monde
-    int   color;  // couleur à utiliser (N/E/S/W)
-} t_hit;
-
-// Hors-borne = solide. Lignes non rectangulaires supportées (ragged).
-static inline bool is_solid_cell(t_env *env, int mx, int my)
+static bool	is_solid_cell(t_env *env, int mx, int my)
 {
-    if (my < 0 || !env->map[my])          return true; // hors hauteur
-    if (mx < 0 || mx >= (int)strlen(env->map[my])) return true; // hors largeur
-    char c = env->map[my][mx];
-    return (c != '0');
+	char	c = env->map[my][mx];
+
+	if (my < 0 || !env->map[my])
+		return true;
+	if (mx < 0 || mx >= (int)strlen(env->map[my]))
+		return true;
+	return (c != '0');
 }
-static inline void draw_column(int col_x, const t_hit *h, t_env *env, float fov)
+
+static void	draw_column(int col_x, t_hit *h, t_env *env, float fov)
 {
-    // Projection géométrique propre :
-    // proj = (WIDTH/2) / tan(FOV/2)
-    float proj = (WIDTH * 0.5f) / tanf(fov * 0.5f);
+	float	proj_distance;
+	int		col_h;
+	int		y0;
+	int		y1;
 
-    // Hauteur du mur en pixels
-    int col_h = (int)fmaxf(1.0f, (BLOCK * proj) / fmaxf(h->dist, 1e-4f));
-    int y0 = (HEIGH - col_h) / 2;
-    int y1 = y0 + col_h;
-
-    // On dessine la bande verticale
-    for (int y = y0; y < y1; ++y)
-        put_pixel(col_x, y, h->color, env);
+	h->dist = fixed_dist(env->player.x, env->player.y, h->x, h->y, env);
+	proj_distance = (WIDTH * 0.5f) / tanf(fov * 0.5f);
+	col_h = (int)fmaxf(1.0f, (BLOCK * proj_distance) / fmaxf(h->dist, 1e-4f));
+	y0 = (HEIGH - col_h) / 2;
+	y1 = y0 + col_h;
+	while (y0 < y1)
+	{
+		put_pixel(col_x, ++y0, h->color, env);
+	}	
 }
-// Retourne un impact DDA avec distance perpendiculaire (corrige le fish-eye nativement)
-static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
+
+float	distance(float x, float y)
 {
-    // Direction du rayon
+	return (sqrt((x * x) + (y * y)));
+}
+
+float	fixed_dist(float x1, float y1, float x2, float y2, t_env *env)
+{
+	float	delta_x = x2 - x1;
+	float	delta_y = y2 - y1;
+	float	angle = atan2(delta_y, delta_x) - env->player.angle;
+	float	fixed_dis = distance(delta_x, delta_y) * cos(angle);
+	return (fixed_dis);
+}
+
+static void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
+{
     float dirx = cosf(ray_ang);
     float diry = sinf(ray_ang);
 
-    // Position de départ en "cellules"
     float cellx = p->x / BLOCK;
     float celly = p->y / BLOCK;
 
     int mapx = (int)floorf(cellx);
     int mapy = (int)floorf(celly);
 
-    // Longueurs de parcours d'une cellule à l'autre
-    // (deltaDist = distance pour passer une frontière verticale/horizontale en coordonnées cellule)
-    float inv_dirx = (fabsf(dirx) < 1e-8f) ? (dirx >= 0 ? 1e8f : -1e8f) : 1.0f / dirx;
-    float inv_diry = (fabsf(diry) < 1e-8f) ? (diry >= 0 ? 1e8f : -1e8f) : 1.0f / diry;
+	float inv_dirx;
+	if (fabsf(dirx) < 1e-8f)
+	{
+		if (dirx >= 0)
+			inv_dirx = 1e8f;
+		else
+			inv_dirx = -1e8f;
+	}
+	else
+	{
+		inv_dirx = 1.0f / dirx;
+	}
+	float inv_diry;
+	if (fabsf(dirx) < 1e-8f)
+	{
+		if (dirx >= 0)
+			inv_diry = 1e8f;
+		else
+			inv_diry = -1e8f;
+	}
+	else
+	{
+		inv_diry = 1.0f / diry;
+	}
 
     float deltaDistX = fabsf(inv_dirx);
     float deltaDistY = fabsf(inv_diry);
@@ -121,7 +151,6 @@ static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit 
 
     float sideDistX, sideDistY;
 
-    // distance initiale jusqu’à la première frontière verticale/horizontale
     if (stepX > 0)
         sideDistX = (floorf(cellx) + 1.0f - cellx) * deltaDistX;
     else
@@ -132,9 +161,8 @@ static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit 
     else
         sideDistY = (celly - floorf(celly)) * deltaDistY;
 
-    int side = -1; // 0 = frontière verticale (mur E/W), 1 = frontière horizontale (mur N/S)
+    int side = -1;
 
-    // DDA : avancer jusqu'à heurter une case solide
     while (1) {
         if (sideDistX < sideDistY) {
             sideDistX += deltaDistX;
@@ -149,32 +177,35 @@ static inline void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit 
             break;
     }
 
-    // Distance perpendiculaire (en unités "cellules"), puis conversion en "monde"
     float perpCellDist;
     if (side == 0) {
-        // On a traversé une frontière verticale
         perpCellDist = (mapx - cellx + (1 - stepX) * 0.5f) * (inv_dirx > 0 ? 1.0f : -1.0f) * (1.0f / ( (dirx == 0.0f) ? 1e-8f : dirx));
         perpCellDist = fabsf( (mapx - cellx + (1 - stepX) * 0.5f) * inv_dirx );
     } else {
-        // On a traversé une frontière horizontale
         perpCellDist = fabsf( (mapy - celly + (1 - stepY) * 0.5f) * inv_diry );
     }
 
-    // En monde (pixels si BLOCK est en px)
     float dist_world = perpCellDist * BLOCK;
 
-    // Point d'impact en monde
     float ix = p->x + dirx * dist_world;
     float iy = p->y + diry * dist_world;
 
-    // Couleur en fonction de la face heurtée (déterministe)
     int color;
-    if (side == 0)           // mur "vertical"
-        color = (stepX > 0) ? COLOR_WEST : COLOR_EAST;   // +x => entre par face OUEST
-    else                     // mur "horizontal"
-        color = (stepY > 0) ? COLOR_NORTH : COLOR_SOUTH; // +y (vers le bas) => face NORD
-
-    hit->dist  = dist_world; // déjà perpendiculaire → pas besoin de cos(angle diff).
+	if (side == 0)
+	{
+		if (stepX > 0)
+			color = COLOR_WEST;
+		else
+			color = COLOR_EAST;
+	}
+	else
+	{
+		if (stepY > 0)
+			color = COLOR_NORTH;
+		else
+			color = COLOR_SOUTH;
+	}
+    hit->dist  = dist_world;
     hit->x     = ix;
     hit->y     = iy;
     hit->color = color;
@@ -202,101 +233,85 @@ bool	touch(float px, float py, t_env *env)
 	return (false);
 }
 
-int	line_color(float px, float py, t_env *env)
-{
-	int cell_x = (int)(px / BLOCK);
-	int cell_y = (int)(py / BLOCK);
+// int	line_color(float px, float py, t_env *env)
+// {
+// 	int cell_x = (int)(px / BLOCK);
+// 	int cell_y = (int)(py / BLOCK);
 
-	float local_x = fmod(px, BLOCK);
-	float local_y = fmod(py, BLOCK);
+// 	float local_x = fmod(px, BLOCK);
+// 	float local_y = fmod(py, BLOCK);
 
-	float dist_left   = local_x;
-	float dist_right  = BLOCK - local_x;
-	float dist_top    = local_y;
-	float dist_bottom = BLOCK - local_y;
+// 	float dist_left   = local_x;
+// 	float dist_right  = BLOCK - local_x;
+// 	float dist_top    = local_y;
+// 	float dist_bottom = BLOCK - local_y;
 
-	// On cherche la plus petite distance → c’est le bord touché
-	if (dist_left < dist_right && dist_left < dist_top && dist_left < dist_bottom)
-		return COLOR_WEST;   // gauche
-	else if (dist_right < dist_left && dist_right < dist_top && dist_right < dist_bottom)
-		return COLOR_EAST;   // droite
-	else if (dist_top < dist_left && dist_top < dist_right && dist_top < dist_bottom)
-		return COLOR_NORTH;  // haut
-	else
-		return COLOR_SOUTH;  // bas
-}
+// 	if (dist_left < dist_right && dist_left < dist_top && dist_left < dist_bottom)
+// 		return COLOR_WEST;
+// 	else if (dist_right < dist_left && dist_right < dist_top && dist_right < dist_bottom)
+// 		return COLOR_EAST;
+// 	else if (dist_top < dist_left && dist_top < dist_right && dist_top < dist_bottom)
+// 		return COLOR_NORTH;
+// 	else
+// 		return COLOR_SOUTH;
+// }
 
+// void	draw_line(t_player *player, t_env *env, float start_x, int i)
+// {
+// 	float	cos_angle = cos(start_x);
+// 	float	sin_angle = sin(start_x);
+// 	float	ray_x = player->x;
+// 	float	ray_y = player->y;
 
-float	distance(float x, float y)
-{
-	return (sqrt((x * x) + (y * y)));
-}
-
-float	fixed_dist(float x1, float y1, float x2, float y2, t_env *env)
-{
-	float	delta_x = x2 - x1;
-	float	delta_y = y2 - y1;
-	float	angle = atan2(delta_y, delta_x) - env->player.angle;
-	float	fixed_dis = distance(delta_x, delta_y) * cos(angle);
-	return (fixed_dis);
-}
-
-void	draw_line(t_player *player, t_env *env, float start_x, int i)
-{
-	float	cos_angle = cos(start_x);
-	float	sin_angle = sin(start_x);
-	float	ray_x = player->x;
-	float	ray_y = player->y;
-
-	while (!touch(ray_x, ray_y, env))
-	{
-		if (DEBUG)
-			put_pixel(ray_x, ray_y, 0xFF0000, env);
-		ray_x += cos_angle;
-		ray_y += sin_angle;
-		// if (touch(ray_x, ray_y, env))
-		// 	color = 
-	}
+// 	while (!touch(ray_x, ray_y, env))
+// 	{
+// 		if (DEBUG)
+// 			put_pixel(ray_x, ray_y, 0xFF0000, env);
+// 		ray_x += cos_angle;
+// 		ray_y += sin_angle;
+// 		// if (touch(ray_x, ray_y, env))
+// 		// 	color = 
+// 	}
 	
-	if (!DEBUG)
-	{
-		float	dist = fixed_dist(player->x, player->y, ray_x, ray_y, env);
-		float	heigh = (BLOCK / dist) * (WIDTH / 2);
-		int		start_y = (HEIGH - heigh) / 2;
-		int		end = start_y + heigh;
-		int		color = line_color(ray_x, ray_y, env);
+// 	if (!DEBUG)
+// 	{
+// 		float	dist = fixed_dist(player->x, player->y, ray_x, ray_y, env);
+// 		float	heigh = (BLOCK / dist) * (WIDTH / 2);
+// 		int		start_y = (HEIGH - heigh) / 2;
+// 		int		end = start_y + heigh;
+// 		int		color = line_color(ray_x, ray_y, env);
 
-		while (start_y < end)
-		{
-			put_pixel(i, start_y, color, env);
-			start_y++;
-		}
-	}
-}
+// 		while (start_y < end)
+// 		{
+// 			put_pixel(i, start_y, color, env);
+// 			start_y++;
+// 		}
+// 	}
+// }
 
 int draw_loop(t_env *env)
 {
-    t_player *player = &env->player;
-    move_player(player);
-    clear_image(env);
+	t_player *player = &env->player;
+	move_player(player);
+	clear_image(env);
 
-    if (DEBUG) {
-        draw_square(player->x, player->y, 10, 0x00FF00, env);
-        draw_map(env);
-    }
+	if (DEBUG) {
+		draw_square(player->x, player->y, 10, 0x00FF00, env);
+		draw_map(env);
+	}
 
-    // Raycasting
-    const float fov = (float)PI / 3.0f;
-    float start = player->angle - fov * 0.5f;
-    float step  = fov / (float)WIDTH;
+	float fov = (float)PI / 3.0f;
+	float start = player->angle - fov * 0.5f;
+	float step  = fov / (float)WIDTH;
 
-    for (int i = 0; i < WIDTH; ++i) {
-        t_hit h;
-        float ray_ang = start + i * step;
-        cast_ray(player, ray_ang, env, &h);
-        draw_column(i, &h, env, fov);
-    }
+	for (int i = 0; i < WIDTH; ++i) {
+		t_hit h;
+		float ray_ang = start + i * step;
+		cast_ray(player, ray_ang, env, &h);
 
-    mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
-    return 0;
+		draw_column(i, &h, env, fov);
+	}
+
+	mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
+	return 0;
 }

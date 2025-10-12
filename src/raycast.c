@@ -107,109 +107,131 @@ float	fixed_dist(float x1, float y1, float x2, float y2, t_env *env)
 	return (fixed_dis);
 }
 
-static void cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
+static void	init_ray_dir(float ray_ang, t_rayinfo *r)
 {
-    float dirx = cosf(ray_ang);
-    float diry = sinf(ray_ang);
-
-    float cellx = p->x / BLOCK;
-    float celly = p->y / BLOCK;
-
-    int mapx = (int)floorf(cellx);
-    int mapy = (int)floorf(celly);
-
-	float inv_dirx;
-	if (fabsf(dirx) < 1e-8f)
-	{
-		if (dirx >= 0)
-			inv_dirx = 1e8f;
-		else
-			inv_dirx = -1e8f;
-	}
-	else
-	{
-		inv_dirx = 1.0f / dirx;
-	}
-	float inv_diry;
-	if (fabsf(dirx) < 1e-8f)
-	{
-		if (dirx >= 0)
-			inv_diry = 1e8f;
-		else
-			inv_diry = -1e8f;
-	}
-	else
-	{
-		inv_diry = 1.0f / diry;
-	}
-
-    float deltaDistX = fabsf(inv_dirx);
-    float deltaDistY = fabsf(inv_diry);
-
-    int stepX = (dirx < 0.0f) ? -1 : 1;
-    int stepY = (diry < 0.0f) ? -1 : 1;
-
-    float sideDistX, sideDistY;
-
-    if (stepX > 0)
-        sideDistX = (floorf(cellx) + 1.0f - cellx) * deltaDistX;
-    else
-        sideDistX = (cellx - floorf(cellx)) * deltaDistX;
-
-    if (stepY > 0)
-        sideDistY = (floorf(celly) + 1.0f - celly) * deltaDistY;
-    else
-        sideDistY = (celly - floorf(celly)) * deltaDistY;
-
-    int side = -1;
-
-    while (1) {
-        if (sideDistX < sideDistY) {
-            sideDistX += deltaDistX;
-            mapx += stepX;
-            side = 0;
-        } else {
-            sideDistY += deltaDistY;
-            mapy += stepY;
-            side = 1;
-        }
-        if (is_solid_cell(env, mapx, mapy))
-            break;
-    }
-
-    float perpCellDist;
-    if (side == 0) {
-        perpCellDist = (mapx - cellx + (1 - stepX) * 0.5f) * (inv_dirx > 0 ? 1.0f : -1.0f) * (1.0f / ( (dirx == 0.0f) ? 1e-8f : dirx));
-        perpCellDist = fabsf( (mapx - cellx + (1 - stepX) * 0.5f) * inv_dirx );
-    } else {
-        perpCellDist = fabsf( (mapy - celly + (1 - stepY) * 0.5f) * inv_diry );
-    }
-
-    float dist_world = perpCellDist * BLOCK;
-
-    float ix = p->x + dirx * dist_world;
-    float iy = p->y + diry * dist_world;
-
-    int color;
-	if (side == 0)
-	{
-		if (stepX > 0)
-			color = COLOR_WEST;
-		else
-			color = COLOR_EAST;
-	}
-	else
-	{
-		if (stepY > 0)
-			color = COLOR_NORTH;
-		else
-			color = COLOR_SOUTH;
-	}
-    hit->dist  = dist_world;
-    hit->x     = ix;
-    hit->y     = iy;
-    hit->color = color;
+	r->dirx = cosf(ray_ang);
+	r->diry = sinf(ray_ang);
 }
+
+static void	init_ray_grid(const t_player *p, t_rayinfo *r)
+{
+	r->cellx = p->x / BLOCK;
+	r->celly = p->y / BLOCK;
+	r->mapx = (int)floorf(r->cellx);
+	r->mapy = (int)floorf(r->celly);
+}
+
+static void	set_inverse_dirs(t_rayinfo *r)
+{
+	if (fabsf(r->dirx) < 1e-8f)
+	{
+		if (r->dirx >= 0)
+			r->inv_dirx = 1e8f;
+		else
+			r->inv_dirx = -1e8f;
+	}
+	else
+		r->inv_dirx = 1.0f / r->dirx;
+	if (fabsf(r->diry) < 1e-8f)
+	{
+		if (r->diry >= 0)
+			r->inv_diry = 1e8f;
+		else
+			r->inv_diry = -1e8f;
+	}
+	else
+		r->inv_diry = 1.0f / r->diry;
+}
+
+static void	init_ray_steps(t_rayinfo *r)
+{
+	set_inverse_dirs(r);
+	r->deltaX = fabsf(r->inv_dirx);
+	r->deltaY = fabsf(r->inv_diry);
+	if (r->dirx < 0.0f)
+		r->stepX = -1;
+	else
+		r->stepX = 1;
+	if (r->diry < 0.0f)
+		r->stepY = -1;
+	else
+		r->stepY = 1;
+	if (r->stepX > 0)
+		r->sideX = (floorf(r->cellx) + 1.0f - r->cellx) * r->deltaX;
+	else
+		r->sideX = (r->cellx - floorf(r->cellx)) * r->deltaX;
+	if (r->stepY > 0)
+		r->sideY = (floorf(r->celly) + 1.0f - r->celly) * r->deltaY;
+	else
+		r->sideY = (r->celly - floorf(r->celly)) * r->deltaY;
+}
+
+static void	perform_dda(t_env *env, t_rayinfo *r)
+{
+	while (1)
+	{
+		if (r->sideX < r->sideY)
+		{
+			r->sideX += r->deltaX;
+			r->mapx += r->stepX;
+			r->side = 0;
+		}
+		else
+		{
+			r->sideY += r->deltaY;
+			r->mapy += r->stepY;
+			r->side = 1;
+		}
+		if (is_solid_cell(env, r->mapx, r->mapy))
+			break ;
+	}
+}
+
+static void	compute_hit(const t_player *p, t_rayinfo *r, t_hit *hit)
+{
+	float	dist;
+	float	ix;
+	float	iy;
+
+	if (r->side == 0)
+		dist = fabsf((r->mapx - r->cellx + (1 - r->stepX) * 0.5f)
+				* r->inv_dirx);
+	else
+		dist = fabsf((r->mapy - r->celly + (1 - r->stepY) * 0.5f)
+				* r->inv_diry);
+	dist *= BLOCK;
+	ix = p->x + r->dirx * dist;
+	iy = p->y + r->diry * dist;
+	if (r->side == 0)
+	{
+		if (r->stepX > 0)
+			hit->color = COLOR_WEST;
+		else
+			hit->color = COLOR_EAST;
+	}
+	else
+	{
+		if (r->stepY > 0)
+			hit->color = COLOR_NORTH;
+		else
+			hit->color = COLOR_SOUTH;
+	}
+	hit->dist = dist;
+	hit->x = ix;
+	hit->y = iy;
+}
+
+void	cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
+{
+	t_rayinfo	r;
+
+	init_ray_dir(ray_ang, &r);
+	init_ray_grid(p, &r);
+	init_ray_steps(&r);
+	perform_dda(env, &r);
+	compute_hit(p, &r, hit);
+}
+
 
 void	init_env(t_env *env)
 {

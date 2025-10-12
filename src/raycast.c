@@ -64,34 +64,53 @@ void	draw_map(t_env *env)
 		}
 }
 
-static bool	is_solid_cell(t_env *env, int mx, int my)
-{
-	char	c = env->map[my][mx];
+// static bool	is_solid_cell(t_env *env, int mx, int my)
+// {
+// 	char	c = env->map[my][mx];
 
-	if (my < 0 || !env->map[my])
-		return true;
-	if (mx < 0 || mx >= (int)strlen(env->map[my]))
-		return true;
-	return (c != '0');
+// 	if (my < 0 || !env->map[my])
+// 		return true;
+// 	if (mx < 0 || mx >= (int)strlen(env->map[my]))
+// 		return true;
+// 	return (c != '0');
+// }
+
+static bool is_solid_cell(t_env *env, int mx, int my)
+{
+    if (my < 0 || !env->map[my])            return true;
+    if (mx < 0 || mx >= (int)strlen(env->map[my])) return true;
+
+    char c = env->map[my][mx];
+    return (c != '0');
 }
 
-static void	draw_column(int col_x, t_hit *h, t_env *env, float fov)
+static void draw_column(int col_x, t_hit *h, t_env *env, float fov)
 {
-	float	proj_distance;
-	int		col_h;
-	int		y0;
-	int		y1;
+    h->dist = fixed_dist(env->player.x, env->player.y, h->x, h->y, env);
 
-	h->dist = fixed_dist(env->player.x, env->player.y, h->x, h->y, env);
-	proj_distance = (WIDTH * 0.5f) / tanf(fov * 0.5f);
-	col_h = (int)fmaxf(1.0f, (BLOCK * proj_distance) / fmaxf(h->dist, 1e-4f));
-	y0 = (HEIGH - col_h) / 2;
-	y1 = y0 + col_h;
-	while (y0 < y1)
-	{
-		put_pixel(col_x, ++y0, h->color, env);
-	}	
+    float proj_distance = (WIDTH * 0.5f) / tanf(fov * 0.5f);
+    int   col_h = (int)fmaxf(1.0f, (BLOCK * proj_distance) / fmaxf(h->dist, 1e-4f));
+
+    // bornes écran AVANT clipping
+    int   y0 = (HEIGH - col_h) / 2;
+    int   y1 = y0 + col_h - 1;
+
+    // on mémorise le drawStart original pour l’alignement texture
+    int   orig_y0 = y0;
+
+    // clipping
+    if (y0 < 0) y0 = 0;
+    if (y1 >= HEIGH) y1 = HEIGH - 1;
+
+    // plafond/sol (optionnel)
+    for (int y = 0; y < y0; ++y)            put_pixel(col_x, y, 0x202020, env);
+    for (int y = y1 + 1; y < HEIGH; ++y)    put_pixel(col_x, y, 0x404040, env);
+
+    // colonne texturée avec alignement correct
+    draw_textured_column(col_x, y0, y1, orig_y0, col_h, h, env);
 }
+
+
 
 float	distance(float x, float y)
 {
@@ -187,38 +206,36 @@ static void	perform_dda(t_env *env, t_rayinfo *r)
 	}
 }
 
-static void	compute_hit(const t_player *p, t_rayinfo *r, t_hit *hit)
+static void compute_hit(const t_player *p, t_rayinfo *r, t_hit *hit)
 {
-	float	dist;
-	float	ix;
-	float	iy;
+    float dist;
+    float ix, iy;
 
-	if (r->side == 0)
-		dist = fabsf((r->mapx - r->cellx + (1 - r->stepX) * 0.5f)
-				* r->inv_dirx);
-	else
-		dist = fabsf((r->mapy - r->celly + (1 - r->stepY) * 0.5f)
-				* r->inv_diry);
-	dist *= BLOCK;
-	ix = p->x + r->dirx * dist;
-	iy = p->y + r->diry * dist;
-	if (r->side == 0)
-	{
-		if (r->stepX > 0)
-			hit->color = COLOR_WEST;
-		else
-			hit->color = COLOR_EAST;
-	}
-	else
-	{
-		if (r->stepY > 0)
-			hit->color = COLOR_NORTH;
-		else
-			hit->color = COLOR_SOUTH;
-	}
-	hit->dist = dist;
-	hit->x = ix;
-	hit->y = iy;
+    if (r->side == 0)
+        dist = fabsf((r->mapx - r->cellx + (1 - r->stepX) * 0.5f) * r->inv_dirx);
+    else
+        dist = fabsf((r->mapy - r->celly + (1 - r->stepY) * 0.5f) * r->inv_diry);
+    dist *= BLOCK;
+
+    ix = p->x + r->dirx * dist;
+    iy = p->y + r->diry * dist;
+
+    if (r->side == 0) {
+        if (r->stepX > 0) hit->color = COLOR_WEST;
+        else              hit->color = COLOR_EAST;
+    } else {
+        if (r->stepY > 0) hit->color = COLOR_NORTH;
+        else              hit->color = COLOR_SOUTH;
+    }
+  
+    hit->dist = dist;
+    hit->x = ix;
+    hit->y = iy;
+
+    // >>> AJOUTS pour le texturing <<<
+    hit->side  = r->side;
+    hit->stepX = r->stepX;
+    hit->stepY = r->stepY;
 }
 
 void	cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
@@ -232,18 +249,38 @@ void	cast_ray(const t_player *p, float ray_ang, t_env *env, t_hit *hit)
 	compute_hit(p, &r, hit);
 }
 
+// void	init_env(t_env *env)
+// {
+// 	init_player(&env->player);
+// 	env->player.env = env;
+// 	env->map = get_map();
+// 	env->mlx = mlx_init();
+// 	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "World");
+// 	env->img = mlx_new_image(env->mlx, WIDTH, HEIGH);
+// 	env->data = mlx_get_data_addr(env->img, &env->bpp, &env->size_line, &env->endian);
+// 	mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
+// }
 
-void	init_env(t_env *env)
+void init_env(t_env *env)
 {
-	init_player(&env->player);
-	env->player.env = env;
-	env->map = get_map();
-	env->mlx = mlx_init();
-	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "World");
-	env->img = mlx_new_image(env->mlx, WIDTH, HEIGH);
-	env->data = mlx_get_data_addr(env->img, &env->bpp, &env->size_line, &env->endian);
-	mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
+    init_player(&env->player);
+    env->player.env = env;
+    env->map = get_map();
+
+    env->mlx = mlx_init();
+    env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "World");
+    env->img = mlx_new_image(env->mlx, WIDTH, HEIGH);
+    env->data = mlx_get_data_addr(env->img, &env->bpp, &env->size_line, &env->endian);
+
+    // >>> CHARGEMENT DES TEXTURES <<<
+    if (!load_textures(env)) {
+        fprintf(stderr, "Error: failed to load textures\n");
+        exit(EXIT_FAILURE);
+    }
+
+    mlx_put_image_to_window(env->mlx, env->win, env->img, 0, 0);
 }
+
 
 bool	touch(float px, float py, t_env *env)
 {

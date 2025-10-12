@@ -32,6 +32,25 @@
 
 typedef struct s_env t_env;
 
+// --- Textures ---
+typedef struct s_tex {
+    void *img;
+    char *addr;
+    int   w;
+    int   h;
+    int   bpp;
+    int   ll;     // line length (bytes)
+    int   endian;
+} t_tex;
+
+typedef enum e_texid {
+    TEX_NORTH = 0,
+    TEX_SOUTH = 1,
+    TEX_EAST  = 2,
+    TEX_WEST  = 3,
+    TEX_MAX   = 4
+} t_texid;
+
 typedef struct	s_player
 {
 	float x;
@@ -50,27 +69,58 @@ typedef struct	s_player
 	
 }	t_player;
 
+typedef struct s_hit {
+    float   dist;
+    float   x;
+    float   y;
+    int     color;
+
+    int     side;   // 0 = mur vertical (X), 1 = mur horizontal (Y)
+    int     stepX;  // -1 ou 1 (sens de progression en X dans la DDA)
+    int     stepY;  // -1 ou 1 (sens de progression en Y dans la DDA)
+} t_hit;
+
+
 typedef struct s_env
 {
-	void	*mlx;
-	void	*win;
-	void	*img;
+    void    *mlx;
+    void    *win;
+    void    *img;
 
-	char	*data;
-	int	bpp;
-	int	size_line;
-	int	endian;
-	t_player	player;
+    char    *data;
+    int     bpp;
+    int     size_line;
+    int     endian;
+    t_player player;
 
-	char	**map;
-}	t_env;
+    char    **map;
 
-typedef struct s_hit {
-	float	dist;
-	float	x;
-	float	y;
-	int		color;
-} t_hit;
+    t_tex   tex[TEX_MAX];  // 4 textures N/E/S/O
+}   t_env;
+
+
+
+// typedef struct s_env
+// {
+// 	void	*mlx;
+// 	void	*win;
+// 	void	*img;
+
+// 	char	*data;
+// 	int	bpp;
+// 	int	size_line;
+// 	int	endian;
+// 	t_player	player;
+
+// 	char	**map;
+// }	t_env;
+
+// typedef struct s_hit {
+// 	float	dist;
+// 	float	x;
+// 	float	y;
+// 	int		color;
+// } t_hit;
 
 typedef struct s_rayinfo
 {
@@ -108,5 +158,15 @@ void	init_env(t_env *env);
 bool	touch(float px, float py, t_env *env);
 float	distance(float x, float y);
 float	fixed_dist(float x1, float y1, float x2, float y2, t_env *env);
+
+// textures.c
+int  load_textures(t_env *env);
+void destroy_textures(t_env *env);
+
+// draw_textured.c
+void draw_textured_column(int col_x, int y0, int y1,
+                          int orig_y0, int lineH,
+                          const t_hit *h, t_env *env);
+
 
 #endif

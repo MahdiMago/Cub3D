@@ -1,58 +1,91 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   draw_textured.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/13 17:30:29 by mamagoma          #+#    #+#             */
+/*   Updated: 2025/10/13 18:15:33 by mamagoma         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/cub3d.h"
 #include <math.h>
 
 // Lecture d'un pixel d'une texture (32 bits)
-static inline unsigned int texel(const t_tex *t, int x, int y)
+static unsigned int	texel(const t_tex *t, int x, int y)
 {
-    char *p = t->addr + y * t->ll + x * (t->bpp >> 3);
-    return *(unsigned int *)p; // BGRA (X11) mais on copie 32b → 32b, donc OK
+	char	*p;
+
+	p = t->addr + y * t->ll + x * (t->bpp >> 3);
+	return (*(unsigned int *)p);
 }
 
 // Ecrit un pixel dans ton framebuffer
-static inline void put_px_img(t_env *env, int x, int y, unsigned int c)
+static void	put_px_img(t_env *env, int x, int y, unsigned int c)
 {
-    if ((unsigned)x >= WIDTH || (unsigned)y >= HEIGH) return;
-    char *p = env->data + y * env->size_line + x * (env->bpp >> 3);
-    *(unsigned int *)p = c;
+	char	*p;
+
+	if ((unsigned)x >= WIDTH || (unsigned)y >= HEIGH)
+		return ;
+	p = env->data + y * env->size_line + x * (env->bpp >> 3);
+	*(unsigned int *)p = c;
 }
 
-// Choix de la texture selon la face touchée (orientation)
-static inline const t_tex *pick_texture(const t_hit *h, const t_env *env)
+static const t_tex	*pick_texture(const t_hit *h, const t_env *env)
 {
-    if (h->side == 0) // mur vertical (on a traversé une ligne X) → Est/Ouest
-        return (h->stepX > 0) ? &env->tex[TEX_WEST] : &env->tex[TEX_EAST];
-    else              // mur horizontal → Nord/Sud
-        return (h->stepY > 0) ? &env->tex[TEX_NORTH] : &env->tex[TEX_SOUTH];
+	if (h->side == 0)
+	{
+		if (h->stepx > 0)
+			return (&env->tex[TEX_WEST]);
+		else
+			return (&env->tex[TEX_EAST]);
+	}
+	else if (h->stepy > 0)
+		return (&env->tex[TEX_NORTH]);
+	return (&env->tex[TEX_SOUTH]);
 }
 
-void draw_textured_column(int col_x, int y0, int y1,
-                          int orig_y0, int lineH,
-                          const t_hit *h, t_env *env)
+static void	drawing_loop(t_drawvars vars, const t_hit *h,
+				t_tex_vars t_var, t_env *env)
 {
-    const t_tex *tex = pick_texture(h, env);
-    const int texW = tex->w;
-    const int texH = tex->h;
+	int				y;
+	unsigned int	c;
 
-    double wallX = (h->side == 0)
-                 ? fmod(h->y, (double)BLOCK) / (double)BLOCK
-                 : fmod(h->x, (double)BLOCK) / (double)BLOCK;
-    int texX = (int)(wallX * (double)texW);
-    if ((h->side == 0 && h->stepX > 0) || (h->side == 1 && h->stepY < 0))
-        texX = texW - texX - 1;
+	y = vars.y0;
+	while (++y <= vars.y1)
+	{
+		t_var.tex_y = (int)t_var.tex_pos;
+		if ((unsigned)t_var.tex_y >= (unsigned)t_var.tex_h)
+			t_var.tex_y = t_var.tex_h - 1;
+		t_var.tex_pos += t_var.step;
+		c = texel(t_var.tex, t_var.tex_x, t_var.tex_y);
+		if (h->side == 1)
+			c = ((c >> 1) & 0x7F7F7F) | (c & 0xFF000000);
+		put_px_img(env, t_var.col_x, y, c);
+	}
+}
 
-    double step   = (double)texH / (double)lineH;
+void	draw_textured_column(int col_x, t_drawvars vars,
+					const t_hit *h, t_env *env)
+{
+	t_tex_vars	t_var;
 
-    double texPos = ((double)orig_y0 - (double)HEIGH / 2.0 + (double)lineH / 2.0) * step;
-
-    texPos += (double)(y0 - orig_y0) * step;
-
-    for (int y = y0; y <= y1; ++y) {
-        int texY = (int)texPos;
-        if ((unsigned)texY >= (unsigned)texH) texY = texH - 1;
-        texPos += step;
-
-        unsigned int c = texel(tex, texX, texY);
-        if (h->side == 1) c = ((c >> 1) & 0x7F7F7F) | (c & 0xFF000000);
-        put_px_img(env, col_x, y, c);
-    }
+	t_var.tex = pick_texture(h, env);
+	t_var.tex_w = t_var.tex->w;
+	t_var.tex_h = t_var.tex->h;
+	t_var.col_x = col_x;
+	if (h->side == 0)
+		t_var.wall_x = fmod(h->y, (double)BLOCK) / (double)BLOCK;
+	else
+		t_var.wall_x = fmod(h->x, (double)BLOCK) / (double)BLOCK;
+	t_var.tex_x = (int)(t_var.wall_x * (double)t_var.tex_w);
+	if ((h->side == 0 && h->stepx > 0) || (h->side == 1 && h->stepy < 0))
+		t_var.tex_x = t_var.tex_w - t_var.tex_x - 1;
+	t_var.step = (double)t_var.tex_h / (double)vars.col_h;
+	t_var.tex_pos = ((double)vars.orig_y0 - (double)HEIGH
+			/ 2.0 + (double)vars.col_h / 2.0) * t_var.step;
+	t_var.tex_pos += (double)(vars.y0 - vars.orig_y0)*t_var.step;
+	drawing_loop(vars, h, t_var, env);
 }

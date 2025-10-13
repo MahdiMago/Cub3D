@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/05 01:49:43 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/10 00:08:43 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/13 12:44:35 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,9 +61,11 @@ int	key_release(int keycode, t_player *player)
 
 void	try_move(t_player *player, float dx, float dy, t_env *env)
 {
-	float	new_x = player->x + dx;
-	float	new_y = player->y + dy;
+	float	new_x;
+	float	new_y;
 
+	new_x = player->x + dx;
+	new_y = player->y + dy;
 	if (!touch(new_x, player->y, env))
 		player->x += dx;
 	if (!touch(player->x, new_y, env))
@@ -72,11 +74,15 @@ void	try_move(t_player *player, float dx, float dy, t_env *env)
 
 void	move_player(t_player *player)
 {
-	int		speed = 3;
-	float	angle_speed = 0.03;
-	float	cos_angle = cos(player->angle);
-	float	sin_angle = sin(player->angle);
+	int		speed;
+	float	angle_speed;
+	float	cos_angle;
+	float	sin_angle;
 
+	speed = 3;
+	angle_speed = 0.03;
+	cos_angle = cos(player->angle);
+	sin_angle = sin(player->angle);
 	if (player->left_rotate)
 		player->angle -= angle_speed;
 	if (player->right_rotate)

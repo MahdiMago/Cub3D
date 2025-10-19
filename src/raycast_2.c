@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 17:24:00 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 18:13:57 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 17:56:57 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,14 @@
 
 bool	touch(float px, float py, t_env *env)
 {
-	int	x;
-	int	y;
+	int		x;
+	int		y;
+	char	c;
 
 	x = px / BLOCK;
 	y = py / BLOCK;
-	if (env->map[y][x] != '0')
+	c = env->map[y][x];
+	if (c != '0' && c != 'N' && c != 'E' && c != 'W' && c != 'S')
 		return (true);
 	return (false);
 }

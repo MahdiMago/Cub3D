@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 15:40:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 17:24:23 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 16:24:07 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,17 +78,7 @@ void	compute_hit(const t_player *p, t_rayinfo *r, t_hit *hit)
 	vars.dist *= BLOCK;
 	vars.ix = p->x + r->dirx * vars.dist;
 	vars.iy = p->y + r->diry * vars.dist;
-	if (r->side == 0)
-	{
-		if (r->stepx > 0)
-			hit->color = COLOR_WEST;
-		else
-			hit->color = COLOR_EAST;
-	}
-	else if (r->stepy > 0)
-		hit->color = COLOR_NORTH;
-	else
-		hit->color = COLOR_SOUTH;
+	hit->color = 0x00FF00;
 	init_hit(vars, r, hit);
 }
 

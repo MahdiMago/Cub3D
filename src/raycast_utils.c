@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 13:09:58 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 15:16:47 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 17:54:38 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ bool	is_solid_cell(t_env *env, int mx, int my)
 	if (mx < 0 || mx >= (int)strlen(env->map[my]))
 		return (true);
 	c = env->map[my][mx];
-	return (c != '0');
+	return (c != '0' && c != 'N' && c != 'E' && c != 'W' && c != 'S');
 }
 
 void	draw_column(int col_x, t_hit *h, t_env *env, float fov)

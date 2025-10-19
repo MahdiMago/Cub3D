@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 15:42:52 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 15:44:32 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 17:45:06 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,11 +45,11 @@ void	init_ray_steps(t_rayinfo *r)
 
 void	init_env(t_env *env)
 {
-	init_player(&env->player);
-	env->player.env = env;
 	env->map = get_map();
+	env->player.env = env;
+	init_player(&env->player);
 	env->mlx = mlx_init();
-	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "World");
+	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "CUB3D");
 	env->img = mlx_new_image(env->mlx, WIDTH, HEIGH);
 	env->data = mlx_get_data_addr(env->img,
 			&env->bpp, &env->size_line, &env->endian);

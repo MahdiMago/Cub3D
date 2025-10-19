@@ -6,14 +6,12 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 17:30:29 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 18:15:33 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 16:28:08 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
-#include <math.h>
 
-// Lecture d'un pixel d'une texture (32 bits)
 static unsigned int	texel(const t_tex *t, int x, int y)
 {
 	char	*p;
@@ -22,7 +20,6 @@ static unsigned int	texel(const t_tex *t, int x, int y)
 	return (*(unsigned int *)p);
 }
 
-// Ecrit un pixel dans ton framebuffer
 static void	put_px_img(t_env *env, int x, int y, unsigned int c)
 {
 	char	*p;

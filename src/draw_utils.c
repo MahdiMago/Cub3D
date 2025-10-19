@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 12:47:35 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 18:15:02 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 17:55:33 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,16 +45,16 @@ void	draw_square(int x, int y, int color, t_env *env)
 
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + i, y, COLOR_NORTH, env);
+		put_pixel(x + i, y, 0x00FF00, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + BLOCK, y + i, COLOR_SOUTH, env);
+		put_pixel(x + BLOCK, y + i, 0x00FF00, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x, y + i, COLOR_EAST, env);
+		put_pixel(x, y + i, 0x00FF00, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + i, y + BLOCK, COLOR_WEST, env);
+		put_pixel(x + i, y + BLOCK, 0x00FF00, env);
 }
 
 char	**get_map(void)
@@ -70,7 +70,7 @@ char	**get_map(void)
 	map[i++] = "100000200000001";
 	map[i++] = "100000000000001";
 	map[i++] = "1000000300000011111111111";
-	map[i++] = "1000040000000011111100001";
+	map[i++] = "10000400W0000011111100001";
 	map[i++] = "1000000000000011111000001";
 	map[i++] = "1000000000000000000011111";
 	map[i++] = "111111111111111111111";

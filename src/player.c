@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/05 01:49:43 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/13 12:44:35 by mamagoma         ###   ########.fr       */
+/*   Updated: 2025/10/19 17:53:04 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,7 @@
 
 void	init_player(t_player *player)
 {
-	player->x = WIDTH / 2;
-	player->y = HEIGH / 2;
-	player->angle = PI / 2;
+	init_player_pos(player->env);
 	player->key_up = false;
 	player->key_down = false;
 	player->key_left = false;
@@ -27,6 +25,8 @@ void	init_player(t_player *player)
 
 int	keypress(int keycode, t_player *player)
 {
+	if (keycode == ESCAPE)
+		close_window(player->env);
 	if (keycode == W)
 		player->key_up = true;
 	if (keycode == S)

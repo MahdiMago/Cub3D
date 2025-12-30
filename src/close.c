@@ -17,16 +17,21 @@ static void	free_env_resources(t_env *env)
 	int	i;
 
 	i = 0;
-	if (env->map)
+	if (env->parsing.map)
 	{
-		if (env->map)
-			free(env->map);
+		i = 0;
+		while (env->parsing.map[i])
+		{
+			free(env->parsing.map[i]);
+			i++;
+		}
+		free(env->parsing.map);
 	}
 	i = 0;
 	while (i < TEX_MAX)
 	{
-		if (env->tex[i].img)
-			mlx_destroy_image(env->mlx, env->tex[i].img);
+		if (env->parsing.tex[i].img)
+			mlx_destroy_image(env->mlx, env->parsing.tex[i].img);
 		i++;
 	}
 	if (env->img)

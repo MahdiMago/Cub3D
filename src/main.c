@@ -12,11 +12,16 @@
 
 #include "../includes/cub3d.h"
 
-int	main(void)
+int	main(int argc, char **argv)
 {
 	t_env	env;
 
-	init_env(&env);
+	if (argc < 2)
+	{
+		fprintf(stderr, "Usage: %s <map.cub>\n", argv[0]);
+		return (1);
+	}
+	init_env(&env, argv[1]);
 	mlx_hook(env.win, 2, 1L << 0, keypress, &env.player);
 	mlx_hook(env.win, 3, 1L << 1, key_release, &env.player);
 	mlx_loop_hook(env.mlx, draw_loop, &env);

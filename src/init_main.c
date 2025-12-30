@@ -43,10 +43,18 @@ void	init_ray_steps(t_rayinfo *r)
 		r->sidey = (r->celly - floorf(r->celly)) * r->deltay;
 }
 
-void	init_env(t_env *env)
+void	init_env(t_env *env, const char *map_path)
 {
-	env->map = get_map();
+	env->parsing.map = NULL;
 	env->player.env = env;
+	/* parse provided map, fallback to built-in get_map() if parse fails */
+	if (map_path && !parse_file(map_path, &env->parsing))
+	{
+		fprintf(stderr, "Warning: failed to parse %s, using built-in map\n", map_path);
+		env->parsing.map = get_map();
+	}
+	else if (!map_path)
+		env->parsing.map = get_map();
 	init_player(&env->player);
 	env->mlx = mlx_init();
 	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "CUB3D");

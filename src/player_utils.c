@@ -31,12 +31,12 @@ void	init_player_pos(t_env *env)
 	char	c;
 
 	y = 0;
-	while (env->map[y])
+	while (env->parsing.map[y])
 	{
 		x = 0;
-		while (env->map[y][x])
+		while (env->parsing.map[y][x])
 		{
-			c = env->map[y][x];
+			c = env->parsing.map[y][x];
 			if (c == 'N' || c == 'S' || c == 'E' || c == 'W')
 			{
 				env->player.x = (x + 0.5) * BLOCK;

@@ -85,7 +85,9 @@ void	draw_map(t_env *env)
 	char	**map;
 
 	y = 0;
-	map = env->map;
+	map = env->parsing.map;
+	if (!map)
+		return ;
 	while (map[y])
 	{
 		x = 0;
@@ -93,6 +95,7 @@ void	draw_map(t_env *env)
 		{
 			if (map[y][x] == '1')
 				draw_square(x * BLOCK, y * BLOCK, 0XFF00, env);
+			x++;
 		}
 		y++;
 	}

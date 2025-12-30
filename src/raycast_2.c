@@ -20,7 +20,7 @@ bool	touch(float px, float py, t_env *env)
 
 	x = px / BLOCK;
 	y = py / BLOCK;
-	c = env->map[y][x];
+	c = env->parsing.map[y][x];
 	if (c != '0' && c != 'N' && c != 'E' && c != 'W' && c != 'S')
 		return (true);
 	return (false);

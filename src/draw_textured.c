@@ -35,13 +35,13 @@ static const t_tex	*pick_texture(const t_hit *h, const t_env *env)
 	if (h->side == 0)
 	{
 		if (h->stepx > 0)
-			return (&env->tex[TEX_WEST]);
+			return (&env->parsing.tex[TEX_WEST]);
 		else
-			return (&env->tex[TEX_EAST]);
+			return (&env->parsing.tex[TEX_EAST]);
 	}
 	else if (h->stepy > 0)
-		return (&env->tex[TEX_NORTH]);
-	return (&env->tex[TEX_SOUTH]);
+		return (&env->parsing.tex[TEX_NORTH]);
+	return (&env->parsing.tex[TEX_SOUTH]);
 }
 
 static void	drawing_loop(t_drawvars vars, const t_hit *h,

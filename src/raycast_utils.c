@@ -16,11 +16,11 @@ bool	is_solid_cell(t_env *env, int mx, int my)
 {
 	char	c;
 
-	if (my < 0 || !env->map[my])
+	if (my < 0 || !env->parsing.map[my])
 		return (true);
-	if (mx < 0 || mx >= (int)strlen(env->map[my]))
+	if (mx < 0 || mx >= (int)strlen(env->parsing.map[my]))
 		return (true);
-	c = env->map[my][mx];
+	c = env->parsing.map[my][mx];
 	return (c != '0' && c != 'N' && c != 'E' && c != 'W' && c != 'S');
 }
 
@@ -45,11 +45,15 @@ void	draw_column(int col_x, t_hit *h, t_env *env, float fov)
 	if (vars.y1 >= HEIGH)
 		vars.y1 = HEIGH - 1;
 	vars.y = 0;
+	/* ceiling color (fallback to dark grey) */
+	int ceil_col = (env->parsing.color_ceiling >= 0) ? env->parsing.color_ceiling : 0x202020;
 	while (vars.y < vars.y0)
-		put_pixel(col_x, ++vars.y, 0x202020, env);
+		put_pixel(col_x, ++vars.y, ceil_col, env);
 	vars.y = vars.y1;
+	/* floor color (fallback to lighter grey) */
+	int floor_col = (env->parsing.color_floor >= 0) ? env->parsing.color_floor : 0x404040;
 	while (vars.y < HEIGH)
-		put_pixel(col_x, ++vars.y, 0x404040, env);
+		put_pixel(col_x, ++vars.y, floor_col, env);
 	draw_textured_column(col_x, vars, h, env);
 }
 

@@ -33,6 +33,7 @@
 # include <stdlib.h>
 # include <stdbool.h>
 # include <math.h>
+# include "parser_utils.h"
 
 typedef struct s_env	t_env;
 
@@ -80,10 +81,20 @@ typedef struct s_hit
 	float	y;
 	int		color;
 
-	int		side;// 0 = mur vertical (X), 1 = mur horizontal (Y)
-	int		stepx;// -1 ou 1 (sens de progression en X dans la DDA)
-	int		stepy;// -1 ou 1 (sens de progression en Y dans la DDA)
+	int		side;
+	int		stepx;
+	int		stepy;
 }	t_hit;
+
+typedef struct s_parsing
+{
+	char	**map;
+	int		color_ceiling;
+	int		color_floor;
+	t_tex	tex[TEX_MAX];
+	/* paths collected by the parser (NULL if not provided) */
+	char	*tex_path[TEX_MAX];
+}	t_parsing;
 
 typedef struct s_env
 {
@@ -95,9 +106,15 @@ typedef struct s_env
 	int			size_line;
 	int			endian;
 	t_player	player;
-	char		**map;
-	t_tex		tex[TEX_MAX];// N/E/S/O
+	t_parsing	parsing;
+	//char		**map; //a changer donc
+	//t_tex		tex[TEX_MAX];// N/E/S/O ça aussi à changer
 }	t_env;
+
+
+
+/* parse functions */
+int		parse_file(const char *path, t_parsing *parsing);
 
 typedef struct s_rayinfo
 {
@@ -175,7 +192,7 @@ void	clear_image(t_env *env);
 void	draw_square(int x, int y, int color, t_env *env);
 char	**get_map(void);
 void	draw_map(t_env *env);
-void	init_env(t_env *env);
+void	init_env(t_env *env, const char *map_path);
 bool	touch(float px, float py, t_env *env);
 float	distance(float x, float y);
 float	fixed_dist(t_distvars dis_vars, t_env *env);

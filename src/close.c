@@ -6,27 +6,47 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/19 16:50:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/19 17:27:27 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/03 13:20:16 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
 
-static void	free_env_resources(t_env *env)
+static void	free_map(char **map)
+{
+	int	i;
+
+	if (!map)
+		return ;
+	i = 0;
+	while (map[i])
+	{
+		free(map[i]);
+		i++;
+	}
+	free(map);
+}
+
+static void	free_texture_paths(t_parsing *parsing)
 {
 	int	i;
 
 	i = 0;
-	if (env->parsing.map)
+	while (i < TEX_MAX)
 	{
-		i = 0;
-		while (env->parsing.map[i])
+		if (parsing->tex_path[i])
 		{
-			free(env->parsing.map[i]);
-			i++;
+			free(parsing->tex_path[i]);
+			parsing->tex_path[i] = NULL;
 		}
-		free(env->parsing.map);
+		i++;
 	}
+}
+
+static void	free_texture_images(t_env *env)
+{
+	int	i;
+
 	i = 0;
 	while (i < TEX_MAX)
 	{
@@ -34,6 +54,13 @@ static void	free_env_resources(t_env *env)
 			mlx_destroy_image(env->mlx, env->parsing.tex[i].img);
 		i++;
 	}
+}
+
+static void	free_env_resources(t_env *env)
+{
+	free_map(env->parsing.map);
+	free_texture_paths(&env->parsing);
+	free_texture_images(env);
 	if (env->img)
 		mlx_destroy_image(env->mlx, env->img);
 }
@@ -48,8 +75,7 @@ int	close_window(t_env *env)
 	if (env->mlx)
 	{
 		mlx_destroy_display(env->mlx);
-		if (env->mlx)
-			free(env->mlx);
+		free(env->mlx);
 	}
 	exit(0);
 }

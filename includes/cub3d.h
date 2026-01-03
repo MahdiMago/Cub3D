@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 12:20:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/19 17:39:58 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/03 13:17:10 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,13 @@
 
 # define PI 3.14159265358979323846
 
+# include <ctype.h>
 # include <string.h>
 # include "mlx/mlx.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <stdbool.h>
 # include <math.h>
-# include "parser_utils.h"
 
 typedef struct s_env	t_env;
 
@@ -44,7 +44,7 @@ typedef struct s_tex
 	int		w;
 	int		h;
 	int		bpp;
-	int		ll;// line length (bytes)
+	int		ll;
 	int		endian;
 }	t_tex;
 
@@ -92,7 +92,6 @@ typedef struct s_parsing
 	int		color_ceiling;
 	int		color_floor;
 	t_tex	tex[TEX_MAX];
-	/* paths collected by the parser (NULL if not provided) */
 	char	*tex_path[TEX_MAX];
 }	t_parsing;
 
@@ -107,13 +106,8 @@ typedef struct s_env
 	int			endian;
 	t_player	player;
 	t_parsing	parsing;
-	//char		**map; //a changer donc
-	//t_tex		tex[TEX_MAX];// N/E/S/O ça aussi à changer
 }	t_env;
 
-
-
-/* parse functions */
 int		parse_file(const char *path, t_parsing *parsing);
 
 typedef struct s_rayinfo
@@ -183,8 +177,8 @@ typedef struct s_tex_vars
 
 void	init_player(t_player *player);
 int		keypress(int keycode, t_player *player);
-void	move_player(t_player *player);
 int		key_release(int keycode, t_player *player);
+void	move_player(t_player *player);
 
 int		draw_loop(t_env *env);
 void	put_pixel(int x, int y, int color, t_env *env);
@@ -215,5 +209,22 @@ void	draw_textured_column(int col_x, t_drawvars vars,
 			const t_hit *h, t_env *env);
 int		close_window(t_env *env);
 void	init_player_pos(t_env *env);
+void	calculate_distance(t_hit *h, t_env *env);
+void	calculate_column_params(t_drawvars *vars, t_hit *h, float fov);
+void	draw_ceiling(int col_x, t_drawvars *vars, t_env *env);
+void	draw_floor(int col_x, t_drawvars *vars, t_env *env);
+
+char	*trim(char *s);
+int		get_color(const char *s);
+int		tex_id(const char *k);
+char	*clean_map_line(const char *s);
+int		map_append(char ***map, int *mapc, char *clean);
+void	init_parsing(t_parsing *par);
+int		parse_texture(char *s, t_parsing *par);
+int		parse_color_floor(char *s, t_parsing *par);
+int		parse_color_ceiling(char *s, t_parsing *par);
+int		process_line(char *s, t_parsing *par, char ***map, int *mapc);
+int		read_file_lines(FILE *f, t_parsing *par, char ***map, int *mapc);
+int		parse_file(const char *path, t_parsing *par);
 
 #endif

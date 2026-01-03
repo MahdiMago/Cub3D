@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 15:42:52 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/19 17:45:06 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/03 11:53:39 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,10 +47,9 @@ void	init_env(t_env *env, const char *map_path)
 {
 	env->parsing.map = NULL;
 	env->player.env = env;
-	/* parse provided map, fallback to built-in get_map() if parse fails */
 	if (map_path && !parse_file(map_path, &env->parsing))
 	{
-		fprintf(stderr, "Warning: failed to parse %s, using built-in map\n", map_path);
+		fprintf(stderr, "Failed to parse %s, using built-in map\n", map_path);
 		env->parsing.map = get_map();
 	}
 	else if (!map_path)

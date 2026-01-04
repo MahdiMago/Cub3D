@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 15:42:52 by mamagoma          #+#    #+#             */
-/*   Updated: 2026/01/03 11:53:39 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/04 20:41:15 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,17 +43,10 @@ void	init_ray_steps(t_rayinfo *r)
 		r->sidey = (r->celly - floorf(r->celly)) * r->deltay;
 }
 
-void	init_env(t_env *env, const char *map_path)
+void	init_env(t_env *env)
 {
-	env->parsing.map = NULL;
+	env->map = env->map2->rectangular_map;
 	env->player.env = env;
-	if (map_path && !parse_file(map_path, &env->parsing))
-	{
-		fprintf(stderr, "Failed to parse %s, using built-in map\n", map_path);
-		env->parsing.map = get_map();
-	}
-	else if (!map_path)
-		env->parsing.map = get_map();
 	init_player(&env->player);
 	env->mlx = mlx_init();
 	env->win = mlx_new_window(env->mlx, WIDTH, HEIGH, "CUB3D");

@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 12:47:35 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/19 17:55:33 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/04 20:31:30 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,16 +45,16 @@ void	draw_square(int x, int y, int color, t_env *env)
 
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + i, y, 0x00FF00, env);
+		put_pixel(x + i, y, color, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + BLOCK, y + i, 0x00FF00, env);
+		put_pixel(x + BLOCK, y + i, color, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x, y + i, 0x00FF00, env);
+		put_pixel(x, y + i, color, env);
 	i = 0;
 	while (i < BLOCK)
-		put_pixel(x + i, y + BLOCK, 0x00FF00, env);
+		put_pixel(x + i, y + BLOCK, color, env);
 }
 
 char	**get_map(void)
@@ -85,9 +85,7 @@ void	draw_map(t_env *env)
 	char	**map;
 
 	y = 0;
-	map = env->parsing.map;
-	if (!map)
-		return ;
+	map = env->map;
 	while (map[y])
 	{
 		x = 0;
@@ -95,7 +93,6 @@ void	draw_map(t_env *env)
 		{
 			if (map[y][x] == '1')
 				draw_square(x * BLOCK, y * BLOCK, 0XFF00, env);
-			x++;
 		}
 		y++;
 	}

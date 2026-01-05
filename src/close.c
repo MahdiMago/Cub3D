@@ -6,11 +6,41 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/19 16:50:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2025/10/19 17:27:27 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/05 14:40:04 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/cub3d.h"
+
+static void	free_map_arrays(t_map *map)
+{
+	if (map->map_copy)
+		free_string_array(map->map_copy);
+	if (map->trim_map)
+		free_string_array(map->trim_map);
+	if (map->no_path)
+		free(map->no_path);
+	if (map->so_path)
+		free(map->so_path);
+	if (map->we_path)
+		free(map->we_path);
+	if (map->ea_path)
+		free(map->ea_path);
+	if (map->before_map)
+	{
+		free(map->before_map);
+		map->before_map = NULL;
+	}
+	free_extention(map);
+}
+
+void	free_map_end(t_map *map)
+{
+	if (!map)
+		return ;
+	free_map_arrays(map);
+	free(map);
+}
 
 static void	free_env_resources(t_env *env)
 {
@@ -18,11 +48,9 @@ static void	free_env_resources(t_env *env)
 
 	i = 0;
 	if (env->map)
-	{
-		if (env->map)
-			free(env->map);
-	}
-	i = 0;
+		free(env->map);
+	if (env->map2)
+		free_map_end(env->map2);
 	while (i < TEX_MAX)
 	{
 		if (env->tex[i].img)

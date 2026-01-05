@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 12:20:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2026/01/04 20:51:14 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/05 14:37:41 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,6 +226,7 @@ void	draw_textured_column(int col_x, t_drawvars vars,
 int		close_window(t_env *env);
 void	init_player_pos(t_env *env);
 
-//new : 
+void	free_string_array(char **array);
+void	free_extention(t_map *map);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: mamagoma <mamagoma@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/19 16:50:31 by mamagoma          #+#    #+#             */
-/*   Updated: 2026/01/05 14:40:04 by mamagoma         ###   ########.fr       */
+/*   Updated: 2026/01/05 20:34:35 by mamagoma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,6 @@ static void	free_env_resources(t_env *env)
 	int	i;
 
 	i = 0;
-	if (env->map)
-		free(env->map);
 	if (env->map2)
 		free_map_end(env->map2);
 	while (i < TEX_MAX)
